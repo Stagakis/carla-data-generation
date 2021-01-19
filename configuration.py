@@ -13,8 +13,12 @@ class SimulationParams:
     num_of_walkers = 20
     num_of_vehicles = 15
     delta_seconds = 0.03332
-    #ego_vehicle_spawn_point = Transform(Location(x=-3.679951, y=158.979996, z=0.500000), Rotation(pitch=0.000000, yaw=-89.999817, roll=0.000000))
-    ego_vehicle_spawn_point = Transform(Location(x=193.8, y=139.4, z=0.500000), Rotation(pitch=0.000000, yaw=-90, roll=0.000000))
+    
+    
+    ego_vehicle_spawn_point = Transform(Location(x=50.679951, y=80.979996, z=0.500000), Rotation(pitch=0.000000, yaw=-89.999817, roll=0.000000)) #print tin strofi
+    
+    #ego_vehicle_spawn_point = Transform(Location(x=-3.679951, y=220.979996, z=0.500000), Rotation(pitch=0.000000, yaw=-89.999817, roll=0.000000)) #strofi meta tin lakouba, parko
+    #ego_vehicle_spawn_point = Transform(Location(x=193.8, y=139.4, z=0.500000), Rotation(pitch=0.000000, yaw=-90, roll=0.000000)) #benzinadiko
 
 
 
@@ -75,6 +79,7 @@ class CarlaSyncMode(object):
 
     def __exit__(self, *args, **kwargs):
         print("Got exit function!")
+        
         self.world.apply_settings(self._settings)
         return
 

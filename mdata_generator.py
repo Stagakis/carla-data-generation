@@ -7,6 +7,17 @@ import random
 import json
 import time
 import queue
+
+
+def findClosestSpawnPoint(spawn_points, target):
+    dist = [(target.location.x-spawn_points[i].location.x)**2 + (target.location.y-spawn_points[i].location.y)**2 + (target.location.z-spawn_points[i].location.z)**2 for i in range(len(spawn_points))]
+    return spawn_points[dist.index(min(dist))]
+
+def createEgoVehicle(blueprint, transform):
+    blueprint.set_attribute('role_name','ego')
+    ego = world.spawn_actor(ego_bp, findClosestSpawnPoint(spawn_points=vehicles_spawn_points, target=SimulationParams.ego_vehicle_spawn_point))
+
+
 def main():
     #Find and load Json file for sensors and create the necessary filesystem
     f = open(SimulationParams.sensor_json_filepath)
@@ -35,12 +46,13 @@ def main():
     lidar_segment_bp = blueprint_library.find('sensor.lidar.ray_cast_semantic')
 
     #Spawn and configure Ego vehicle
-    ego_bp =random.choice(blueprint_library.filter('vehicle.mustang.*'))
+    ego_bp =r andom.choice(blueprint_library.filter('vehicle.mustang.*'))
     ego_bp.set_attribute('role_name','ego')
-
-    ego = world.spawn_actor(ego_bp, SimulationParams.ego_vehicle_spawn_point)
-    ego_bp.set_attribute('role_name','ego')
+    ego = world.spawn_actor(ego_bp, findClosestSpawnPoint(spawn_points=vehicles_spawn_points, target=SimulationParams.ego_vehicle_spawn_point))
     ego.set_autopilot(True)
+    
+    #createEgoVehicle(blueprint=blueprint_library.filter('vehicle.mustang.*'), point=findClosestSpawnPoint(ehicles_spawn_points, SimulationParams.ego_vehicle_spawn_point))
+
     world.tick()
     sensors_ref, sensor_types = attachSensorsToVehicle(world, data, ego)
 
@@ -64,8 +76,6 @@ def main():
                 data = sync_mode.tick(timeout=5.0)
                 save_sensors.saveAllSensors(SimulationParams.data_output_subfolder, data, sensor_types)
                 save_sensors.saveSteeringAngle(angle, SimulationParams.data_output_subfolder)
-
-
     finally:
         # stop pedestrians (list is [controller, actor, controller, actor ...])
         for i in range(0, len(w_all_actors)):
@@ -79,6 +89,11 @@ def main():
         client.apply_batch([carla.command.DestroyActor(x) for x in v_all_id])
         [s.destroy() for s in sensors_ref]
         ego.destroy()
+
+        #This is to prevent Unreal from crashing from waiting the client.
+        settings = world.get_settings()
+        settings.synchronous_mode = False
+        world.apply_settings(settings)
 
 
 
