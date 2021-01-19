@@ -24,7 +24,6 @@ def main():
     data = json.load(f)
     createOutputDirectories(data)
 
-
     #Connect and load map
     client = carla.Client('localhost', 2000)
     client.set_timeout(10.0)
@@ -50,7 +49,7 @@ def main():
     ego_bp.set_attribute('role_name','ego')
     ego = world.spawn_actor(ego_bp, findClosestSpawnPoint(spawn_points=vehicles_spawn_points, target=SimulationParams.ego_vehicle_spawn_point))
     ego.set_autopilot(True)
-    
+
     #createEgoVehicle(blueprint=blueprint_library.filter('vehicle.mustang.*'), point=findClosestSpawnPoint(ehicles_spawn_points, SimulationParams.ego_vehicle_spawn_point))
 
     world.tick()
