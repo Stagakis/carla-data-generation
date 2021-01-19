@@ -1,0 +1,7 @@
+#Ignore all files...
+*.*
+
+#except the scripts, the config, and self
+!*.py
+!Config/*
+!.gitignore
