@@ -8,15 +8,55 @@ import json
 import time
 import queue
 
+class EgoVehicle:
+
+    def __init__(self, name, config_filepath, position, world):
+        self.name = name
+        self.world = world
+
+        f = open(config_filepath)
+        data = json.load(f)
+
+        createOutputDirectories(data) #TODO change it
+
+        #Get all required blueprints
+        blueprint_library = world.get_blueprint_library()
+        blueprintsVehicles = blueprint_library.filter('vehicle.*')
+        vehicles_spawn_points = world.get_map().get_spawn_points()
+
+        #Spawn and configure Ego vehicle
+        self.ego_bp = random.choice(blueprint_library.filter('vehicle.mustang.*'))
+        self.ego_bp.set_attribute('role_name','ego')
+        self.ego = world.spawn_actor(self.ego_bp, findClosestSpawnPoint(spawn_points=vehicles_spawn_points, target=SimulationParams.ego_vehicle_spawn_point))
+        self.ego.set_autopilot(True)
+
+        self.sensors_ref, self.sensor_types = attachSensorsToVehicle(world, data, self.ego) #attachSensorsToVehicle should be a member function
+
+        self.queues = []
+        q = queue.Queue()
+        world.on_tick(q.put)
+        self.queues.append(q)
+        for sensor in self.sensors_ref:
+            q = queue.Queue()
+            sensor.listen(q.put)
+            self.queues.append(q)
+
+    def getSensorData(self):
+        data = [q.get(timeout=5.0) for q in self.queues]
+        return data
+
+    def destroy(self):
+        [s.destroy() for s in self.sensors_ref]
+        self.ego.destroy()
+
+        #This is to prevent Unreal from crashing from waiting the client.
+        settings = self.world.get_settings()
+        settings.synchronous_mode = False
+        self.world.apply_settings(settings)
 
 def findClosestSpawnPoint(spawn_points, target):
     dist = [(target.location.x-spawn_points[i].location.x)**2 + (target.location.y-spawn_points[i].location.y)**2 + (target.location.z-spawn_points[i].location.z)**2 for i in range(len(spawn_points))]
     return spawn_points[dist.index(min(dist))]
-
-def createEgoVehicle(blueprint, transform):
-    blueprint.set_attribute('role_name','ego')
-    ego = world.spawn_actor(ego_bp, findClosestSpawnPoint(spawn_points=vehicles_spawn_points, target=SimulationParams.ego_vehicle_spawn_point))
-
 
 def main():
     #Find and load Json file for sensors and create the necessary filesystem
@@ -35,7 +75,6 @@ def main():
     blueprintsWalkers = blueprint_library.filter('walker.pedestrian.*')
     walker_controller_bp = blueprint_library.find('controller.ai.walker')
     walkers_spawn_points = world.get_random_location_from_navigation()
-    lidar_segment_bp = blueprint_library.find('sensor.lidar.ray_cast_semantic')
 
     #Spawn and configure Ego vehicle
     ego_bp = random.choice(blueprint_library.filter('vehicle.mustang.*'))

@@ -7,6 +7,7 @@ import random
 import json
 import time
 import queue
+from EgoVehicle import EgoVehicle
 
 def main():
     #Connect and load map
@@ -29,6 +30,8 @@ def main():
     walkers_spawn_points = world.get_random_location_from_navigation()
     lidar_segment_bp = blueprint_library.find('sensor.lidar.ray_cast_semantic')
 
+    ego = EgoVehicle("ego1", SimulationParams.sensor_json_filepath, SimulationParams.ego_vehicle_spawn_point, world)
+
     #Spawn npc actors
     w_all_actors, w_all_id = spawnWalkers(client, world, blueprintsWalkers, SimulationParams.num_of_walkers)
     v_all_actors, v_all_id = spawnVehicles(client, world, vehicles_spawn_points, blueprintsVehicles, SimulationParams.num_of_vehicles)
@@ -43,7 +46,10 @@ def main():
     try:
         with CarlaSyncMode(world, []) as sync_mode:
             while True:
-                data = sync_mode.tick(timeout=5.0)
+                sync_mode.tick(timeout=5.0)
+                data = ego.getSensorData()
+                save_sensors.saveAllSensors(SimulationParams.data_output_subfolder, data, ego.sensor_types)
+                #save_sensors.saveSteeringAngle(angle, SimulationParams.data_output_subfolder)
                 print("new frame!")
     finally:
         # stop pedestrians (list is [controller, actor, controller, actor ...])
@@ -56,7 +62,7 @@ def main():
         client.apply_batch([carla.command.DestroyActor(x) for x in w_all_id])
 
         client.apply_batch([carla.command.DestroyActor(x) for x in v_all_id])
-        [s.destroy() for s in sensors_ref]
+        #[s.destroy() for s in sensors_ref]
         ego.destroy()
 
         #This is to prevent Unreal from crashing from waiting the client.

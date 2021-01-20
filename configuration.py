@@ -15,6 +15,7 @@ class SimulationParams:
     delta_seconds = 0.03332
     
     
+    number_of_ego_vehicles = 1
     ego_vehicle_spawn_point = Transform(Location(x=50.679951, y=80.979996, z=0.500000), Rotation(pitch=0.000000, yaw=-89.999817, roll=0.000000)) #print tin strofi
     
     #ego_vehicle_spawn_point = Transform(Location(x=-3.679951, y=220.979996, z=0.500000), Rotation(pitch=0.000000, yaw=-89.999817, roll=0.000000)) #strofi meta tin lakouba, parko
