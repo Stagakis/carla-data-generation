@@ -62,7 +62,11 @@ def main():
                     
                     output_folder = os.path.join(SimulationParams.data_output_subfolder, "ego" + str(i))
                     save_sensors.saveAllSensors(output_folder, data, egos[i].sensor_types)
-                    #save_sensors.saveSteeringAngle(angle, SimulationParams.data_output_subfolder)
+                    
+                    control = egos[i].ego.get_control()
+                    angle = control.steer
+                    save_sensors.saveSteeringAngle(angle, output_folder)
+
                 print("new frame!")
     finally:
         # stop pedestrians (list is [controller, actor, controller, actor ...])
@@ -73,10 +77,10 @@ def main():
                 pass
         # destroy pedestrian (actor and controller)
         client.apply_batch([carla.command.DestroyActor(x) for x in w_all_id])
-
         client.apply_batch([carla.command.DestroyActor(x) for x in v_all_id])
-        #[s.destroy() for s in sensors_ref]
-        ego.destroy()
+
+        for ego in egos:
+            ego.destroy()
 
         #This is to prevent Unreal from crashing from waiting the client.
         settings = world.get_settings()

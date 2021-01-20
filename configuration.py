@@ -8,7 +8,6 @@ import time
 class SimulationParams:
     town_map = "Town02"
 
-    data_output_subfolder = None #This is defined at createOutputDirectories()
     num_of_walkers = 20
     num_of_vehicles = 15
     delta_seconds = 0.03332
@@ -19,6 +18,11 @@ class SimulationParams:
                                 Transform(Location(x=-1.679951, y=180.979996, z=0.500000), Rotation(pitch=0.000000, yaw=-89.999817, roll=0.000000))]
     
     number_of_ego_vehicles = len(ego_vehicle_spawn_point)
+
+    now = datetime.now()
+    dt_string = now.strftime("%d_%m_%Y_%H_%M_%S")
+    PHASE = town_map + "_" + dt_string
+    data_output_subfolder = os.path.join("out/", PHASE)
     #ego_vehicle_spawn_point = Transform(Location(x=-3.679951, y=220.979996, z=0.500000), Rotation(pitch=0.000000, yaw=-89.999817, roll=0.000000)) #strofi meta tin lakouba, parko
     #ego_vehicle_spawn_point = Transform(Location(x=193.8, y=139.4, z=0.500000), Rotation(pitch=0.000000, yaw=-90, roll=0.000000)) #benzinadiko
 
@@ -111,11 +115,6 @@ def setupWorld(world):
 
 #This will create the whole file system structure. It will create a separate folder for each sensor
 def createOutputDirectories(data):
-    now = datetime.now()
-    dt_string = now.strftime("%d_%m_%Y_%H_%M_%S")
-    PHASE = SimulationParams.town_map + "_" + dt_string
-    SimulationParams.data_output_subfolder = os.path.join("out/", PHASE)
-
     output_sensor_folders = [ data['sensors'][i]['type'] for i in range(len(data['sensors'])) ]
     try:
         os.mkdir("out/")
