@@ -44,17 +44,22 @@ def main():
     world.tick()
 
     spectator = world.get_spectator()
-    #transform = ego.get_transform()
-    #spectator.set_transform(carla.Transform(transform.location + carla.Location(z=100), carla.Rotation(pitch=-90)))
+    transform = egos[1].ego.get_transform()
+    spectator.set_transform(carla.Transform(transform.location + carla.Location(z=100), carla.Rotation(pitch=-90)))
 
     print("Starting simulation...")
 
+    k = 0
     try:
         with CarlaSyncMode(world, []) as sync_mode:
             while True:
-                sync_mode.tick(timeout=5.0)
+                frame_id = sync_mode.tick(timeout=5.0)
+                if(k < SimulationParams.ignore_first_n_saves):
+                    k = k + 1
+                    continue
                 for i in range(len(egos)):
-                    data = egos[i].getSensorData()
+                    data = egos[i].getSensorData(frame_id)
+                    
                     output_folder = os.path.join(SimulationParams.data_output_subfolder, "ego" + str(i))
                     save_sensors.saveAllSensors(output_folder, data, egos[i].sensor_types)
                     #save_sensors.saveSteeringAngle(angle, SimulationParams.data_output_subfolder)

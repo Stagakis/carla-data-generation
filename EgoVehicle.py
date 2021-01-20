@@ -43,9 +43,16 @@ class EgoVehicle:
             sensor.listen(q.put)
             self.queues.append(q)
 
-    def getSensorData(self):
-        data = [q.get(timeout=5.0) for q in self.queues]
+    def getSensorData(self, frame_id):
+        data = [self._retrieve_data(q, frame_id) for q in self.queues]
         return data
+
+    def _retrieve_data(self, sensor_queue, frame_id):
+        while True:
+            data = sensor_queue.get(timeout=5.0)
+            if data.frame == frame_id:
+                return data
+
 
     def destroy(self):
         [s.destroy() for s in self.sensors_ref]

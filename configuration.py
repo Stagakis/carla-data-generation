@@ -12,10 +12,11 @@ class SimulationParams:
     num_of_walkers = 20
     num_of_vehicles = 15
     delta_seconds = 0.03332
-    
+    ignore_first_n_saves = 70
+
     sensor_json_filepath = ["Config/sensors.json", "Config/sensors.json"]
-    ego_vehicle_spawn_point = [Transform(Location(x=50.679951, y=80.979996, z=0.500000), Rotation(pitch=0.000000, yaw=-89.999817, roll=0.000000)),
-                                Transform(Location(x=-3.679951, y=220.979996, z=0.500000), Rotation(pitch=0.000000, yaw=-89.999817, roll=0.000000))]
+    ego_vehicle_spawn_point = [Transform(Location(x=35.679951, y=80.979996, z=0.500000), Rotation(pitch=0.000000, yaw=-89.999817, roll=0.000000)),
+                                Transform(Location(x=-1.679951, y=180.979996, z=0.500000), Rotation(pitch=0.000000, yaw=-89.999817, roll=0.000000))]
     
     number_of_ego_vehicles = len(ego_vehicle_spawn_point)
     #ego_vehicle_spawn_point = Transform(Location(x=-3.679951, y=220.979996, z=0.500000), Rotation(pitch=0.000000, yaw=-89.999817, roll=0.000000)) #strofi meta tin lakouba, parko
@@ -74,9 +75,9 @@ class CarlaSyncMode(object):
 
     def tick(self, timeout):
         self.frame = self.world.tick()
-        data = [self._retrieve_data(q, timeout) for q in self._queues]
-        assert all(x.frame == self.frame for x in data)
-        return data
+        #data = [self._retrieve_data(q, timeout) for q in self._queues]
+        #assert all(x.frame == self.frame for x in data)
+        return self.frame
 
     def __exit__(self, *args, **kwargs):
         print("Got exit function!")
