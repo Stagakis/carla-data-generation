@@ -8,23 +8,7 @@ import json
 import time
 import queue
 
-
-def findClosestSpawnPoint(spawn_points, target):
-    dist = [(target.location.x-spawn_points[i].location.x)**2 + (target.location.y-spawn_points[i].location.y)**2 + (target.location.z-spawn_points[i].location.z)**2 for i in range(len(spawn_points))]
-    return spawn_points[dist.index(min(dist))]
-
-def createEgoVehicle(blueprint, transform):
-    blueprint.set_attribute('role_name','ego')
-    ego = world.spawn_actor(ego_bp, findClosestSpawnPoint(spawn_points=vehicles_spawn_points, target=SimulationParams.ego_vehicle_spawn_point))
-
-
 def main():
-    #Find and load Json file for sensors and create the necessary filesystem
-    f = open(SimulationParams.sensor_json_filepath)
-    data = json.load(f)
-    createOutputDirectories(data)
-
-
     #Connect and load map
     client = carla.Client('localhost', 2000)
     client.set_timeout(10.0)
@@ -45,37 +29,22 @@ def main():
     walkers_spawn_points = world.get_random_location_from_navigation()
     lidar_segment_bp = blueprint_library.find('sensor.lidar.ray_cast_semantic')
 
-    #Spawn and configure Ego vehicle
-    ego_bp = random.choice(blueprint_library.filter('vehicle.mustang.*'))
-    ego_bp.set_attribute('role_name','ego')
-    ego = world.spawn_actor(ego_bp, findClosestSpawnPoint(spawn_points=vehicles_spawn_points, target=SimulationParams.ego_vehicle_spawn_point))
-    ego.set_autopilot(True)
-    
-    #createEgoVehicle(blueprint=blueprint_library.filter('vehicle.mustang.*'), point=findClosestSpawnPoint(ehicles_spawn_points, SimulationParams.ego_vehicle_spawn_point))
-
-    world.tick()
-    sensors_ref, sensor_types = attachSensorsToVehicle(world, data, ego)
-
     #Spawn npc actors
     w_all_actors, w_all_id = spawnWalkers(client, world, blueprintsWalkers, SimulationParams.num_of_walkers)
     v_all_actors, v_all_id = spawnVehicles(client, world, vehicles_spawn_points, blueprintsVehicles, SimulationParams.num_of_vehicles)
+    world.tick()
 
     spectator = world.get_spectator()
-    transform = ego.get_transform()
-    spectator.set_transform(carla.Transform(transform.location + carla.Location(z=100), carla.Rotation(pitch=-90)))
+    #transform = ego.get_transform()
+    #spectator.set_transform(carla.Transform(transform.location + carla.Location(z=100), carla.Rotation(pitch=-90)))
 
-    #print(sensor_types)
     print("Starting simulation...")
 
     try:
-        with CarlaSyncMode(world, sensors_ref) as sync_mode:
+        with CarlaSyncMode(world, []) as sync_mode:
             while True:
-                control = ego.get_control()
-                angle = control.steer
-                #print("Steering angle [-1,1] is " + str(angle))
                 data = sync_mode.tick(timeout=5.0)
-                save_sensors.saveAllSensors(SimulationParams.data_output_subfolder, data, sensor_types)
-                save_sensors.saveSteeringAngle(angle, SimulationParams.data_output_subfolder)
+                print("new frame!")
     finally:
         # stop pedestrians (list is [controller, actor, controller, actor ...])
         for i in range(0, len(w_all_actors)):

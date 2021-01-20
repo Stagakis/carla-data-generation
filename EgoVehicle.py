@@ -24,20 +24,12 @@ def main():
     data = json.load(f)
     createOutputDirectories(data)
 
-
-    #Connect and load map
     client = carla.Client('localhost', 2000)
     client.set_timeout(10.0)
     world = client.get_world()
-    avail_maps = client.get_available_maps()
-    world = client.load_world(SimulationParams.town_map)
-    blueprint_library = world.get_blueprint_library()
-
-    #Setup
-    setupWorld(world)
-    setupTrafficManager(client)
 
     #Get all required blueprints
+    blueprint_library = world.get_blueprint_library()
     blueprintsVehicles = blueprint_library.filter('vehicle.*')
     vehicles_spawn_points = world.get_map().get_spawn_points()
     blueprintsWalkers = blueprint_library.filter('walker.pedestrian.*')
@@ -56,37 +48,28 @@ def main():
     world.tick()
     sensors_ref, sensor_types = attachSensorsToVehicle(world, data, ego)
 
-    #Spawn npc actors
-    w_all_actors, w_all_id = spawnWalkers(client, world, blueprintsWalkers, SimulationParams.num_of_walkers)
-    v_all_actors, v_all_id = spawnVehicles(client, world, vehicles_spawn_points, blueprintsVehicles, SimulationParams.num_of_vehicles)
-
     spectator = world.get_spectator()
     transform = ego.get_transform()
     spectator.set_transform(carla.Transform(transform.location + carla.Location(z=100), carla.Rotation(pitch=-90)))
 
-    #print(sensor_types)
-    print("Starting simulation...")
+    queues = []
+    q = queue.Queue()
+    world.on_tick(q.put)
+    queues.append(q)
+    for sensor in sensors_ref:
+        q = queue.Queue()
+        sensor.listen(q.put)
+        queues.append(q)
 
     try:
-        with CarlaSyncMode(world, sensors_ref) as sync_mode:
-            while True:
-                control = ego.get_control()
-                angle = control.steer
-                #print("Steering angle [-1,1] is " + str(angle))
-                data = sync_mode.tick(timeout=5.0)
-                save_sensors.saveAllSensors(SimulationParams.data_output_subfolder, data, sensor_types)
-                save_sensors.saveSteeringAngle(angle, SimulationParams.data_output_subfolder)
+        while True:
+            data = [q.get(timeout=5.0) for q in queues]
+            print(data)
+            control = ego.get_control()
+            angle = control.steer
+            save_sensors.saveAllSensors(SimulationParams.data_output_subfolder, data, sensor_types)
+            save_sensors.saveSteeringAngle(angle, SimulationParams.data_output_subfolder)
     finally:
-        # stop pedestrians (list is [controller, actor, controller, actor ...])
-        for i in range(0, len(w_all_actors)):
-            try:
-                w_all_actors[i].stop()
-            except:
-                pass
-        # destroy pedestrian (actor and controller)
-        client.apply_batch([carla.command.DestroyActor(x) for x in w_all_id])
-
-        client.apply_batch([carla.command.DestroyActor(x) for x in v_all_id])
         [s.destroy() for s in sensors_ref]
         ego.destroy()
 
