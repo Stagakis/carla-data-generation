@@ -54,7 +54,7 @@ def main():
         with CarlaSyncMode(world, []) as sync_mode:
             while True:
                 frame_id = sync_mode.tick(timeout=5.0)
-                if(k < SimulationParams.ignore_first_n_saves):
+                if(k < SimulationParams.ignore_first_n_ticks):
                     k = k + 1
                     continue
                 for i in range(len(egos)):

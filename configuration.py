@@ -11,16 +11,20 @@ class SimulationParams:
     num_of_walkers = 20
     num_of_vehicles = 15
     delta_seconds = 0.03332
-    ignore_first_n_saves = 70
+    ignore_first_n_ticks = 70 #At the very start at the simulation nothing happens, so skip the first n ticks
 
-    sensor_json_filepath = ["Config/sensors.json", "Config/sensors.json"]
-    ego_vehicle_spawn_point = [Transform(Location(x=35.679951, y=80.979996, z=0.500000), Rotation(pitch=0.000000, yaw=-89.999817, roll=0.000000)),
-                                Transform(Location(x=-1.679951, y=180.979996, z=0.500000), Rotation(pitch=0.000000, yaw=-89.999817, roll=0.000000))]
+    sensor_json_filepath = [
+        "Config/sensors.json", 
+        "Config/sensors.json"
+        ]
+    ego_vehicle_spawn_point = [
+        Transform(Location(x=35.679951, y=80.979996, z=0.500000), Rotation(pitch=0.000000, yaw=-89.999817, roll=0.000000)),
+        Transform(Location(x=-1.679951, y=180.979996, z=0.500000), Rotation(pitch=0.000000, yaw=-89.999817, roll=0.000000))
+        ]
     
     number_of_ego_vehicles = len(ego_vehicle_spawn_point)
 
-    now = datetime.now()
-    dt_string = now.strftime("%d_%m_%Y_%H_%M_%S")
+    dt_string = datetime.now().strftime("%d_%m_%Y_%H_%M_%S")
     PHASE = town_map + "_" + dt_string
     data_output_subfolder = os.path.join("out/", PHASE)
     #ego_vehicle_spawn_point = Transform(Location(x=-3.679951, y=220.979996, z=0.500000), Rotation(pitch=0.000000, yaw=-89.999817, roll=0.000000)) #strofi meta tin lakouba, parko
