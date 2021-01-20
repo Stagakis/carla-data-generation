@@ -7,17 +7,17 @@ import time
 
 class SimulationParams:
     town_map = "Town02"
-    sensor_json_filepath = "Config/sensors.json"
-    data_output_root_folder = "out/"
+
     data_output_subfolder = None #This is defined at createOutputDirectories()
     num_of_walkers = 20
     num_of_vehicles = 15
     delta_seconds = 0.03332
     
+    sensor_json_filepath = ["Config/sensors.json", "Config/sensors.json"]
+    ego_vehicle_spawn_point = [Transform(Location(x=50.679951, y=80.979996, z=0.500000), Rotation(pitch=0.000000, yaw=-89.999817, roll=0.000000)),
+                                Transform(Location(x=-3.679951, y=220.979996, z=0.500000), Rotation(pitch=0.000000, yaw=-89.999817, roll=0.000000))]
     
-    number_of_ego_vehicles = 1
-    ego_vehicle_spawn_point = Transform(Location(x=50.679951, y=80.979996, z=0.500000), Rotation(pitch=0.000000, yaw=-89.999817, roll=0.000000)) #print tin strofi
-    
+    number_of_ego_vehicles = len(ego_vehicle_spawn_point)
     #ego_vehicle_spawn_point = Transform(Location(x=-3.679951, y=220.979996, z=0.500000), Rotation(pitch=0.000000, yaw=-89.999817, roll=0.000000)) #strofi meta tin lakouba, parko
     #ego_vehicle_spawn_point = Transform(Location(x=193.8, y=139.4, z=0.500000), Rotation(pitch=0.000000, yaw=-90, roll=0.000000)) #benzinadiko
 
@@ -113,16 +113,31 @@ def createOutputDirectories(data):
     now = datetime.now()
     dt_string = now.strftime("%d_%m_%Y_%H_%M_%S")
     PHASE = SimulationParams.town_map + "_" + dt_string
-    SimulationParams.data_output_subfolder = os.path.join(SimulationParams.data_output_root_folder, PHASE)
+    SimulationParams.data_output_subfolder = os.path.join("out/", PHASE)
 
-    output_sensor_folders = [ os.path.join(SimulationParams.data_output_subfolder, data['sensors'][i]['type']) for i in range(len(data['sensors'])) ]
+    output_sensor_folders = [ data['sensors'][i]['type'] for i in range(len(data['sensors'])) ]
     try:
-        os.mkdir(SimulationParams.data_output_root_folder)
+        os.mkdir("out/")
     except OSError:
-        print("Folder " + SimulationParams.data_output_root_folder + " already exists!")
-    os.mkdir(SimulationParams.data_output_subfolder)
-    for folder in output_sensor_folders:
+        pass
+        #print("Folder " + "out/" + " already exists!")
+    try:
+        os.mkdir(SimulationParams.data_output_subfolder)
+    except OSError:
+        pass
+        #print("Folder " + SimulationParams.data_output_subfolder + " already exists!")
+
+    for i in range(SimulationParams.number_of_ego_vehicles):
+        ego_name = "ego" + str(i) +"/"
+        ego_folder = os.path.join(SimulationParams.data_output_subfolder, ego_name)
         try:
-            os.mkdir(folder)
-        except OSError:
-            print("Creation of " + folder + " failed")
+            os.mkdir(ego_folder)
+        except:
+            pass
+            #print("Ego folder " + ego_folder + " already exists!")
+        for sensor in output_sensor_folders:
+            try:
+                os.mkdir(os.path.join(ego_folder, sensor))
+            except OSError:
+                pass
+                #print("Creation of " + os.path.join(ego_folder, sensor) + " failed")

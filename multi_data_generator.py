@@ -7,12 +7,11 @@ import random
 import json
 import time
 import queue
-def main():
-    #Find and load Json file for sensors and create the necessary filesystem
-    f = open(SimulationParams.sensor_json_filepath)
-    data = json.load(f)
-    createOutputDirectories(data)
+import os
+from EgoVehicle import EgoVehicle
 
+def main():
+    assert (len(SimulationParams.ego_vehicle_spawn_point) == len(SimulationParams.sensor_json_filepath))
 
     #Connect and load map
     client = carla.Client('localhost', 2000)
@@ -34,30 +33,32 @@ def main():
     walkers_spawn_points = world.get_random_location_from_navigation()
     lidar_segment_bp = blueprint_library.find('sensor.lidar.ray_cast_semantic')
 
-    #Spawn and configure Ego vehicle
-    ego = world.spawn_actor(random.choice(blueprintsVehicles), SimulationParams.ego_vehicle_spawn_point)
-    ego.set_autopilot(True)
-    world.tick()
-    sensors_ref, sensor_types = attachSensorsToVehicle(world, data, ego)
+
+    egos=[]
+    for i in range(SimulationParams.number_of_ego_vehicles):
+        egos.append(EgoVehicle(SimulationParams.sensor_json_filepath[i], SimulationParams.ego_vehicle_spawn_point[i], world))
 
     #Spawn npc actors
     w_all_actors, w_all_id = spawnWalkers(client, world, blueprintsWalkers, SimulationParams.num_of_walkers)
     v_all_actors, v_all_id = spawnVehicles(client, world, vehicles_spawn_points, blueprintsVehicles, SimulationParams.num_of_vehicles)
+    world.tick()
 
     spectator = world.get_spectator()
-    transform = ego.get_transform()
-    spectator.set_transform(carla.Transform(transform.location + carla.Location(z=100), carla.Rotation(pitch=-90)))
+    #transform = ego.get_transform()
+    #spectator.set_transform(carla.Transform(transform.location + carla.Location(z=100), carla.Rotation(pitch=-90)))
 
-    #print(sensor_types)
     print("Starting simulation...")
 
     try:
-        with CarlaSyncMode(world, sensors_ref) as sync_mode:
+        with CarlaSyncMode(world, []) as sync_mode:
             while True:
-                data = sync_mode.tick(timeout=5.0)
-                save_sensors.saveAllSensors(SimulationParams.data_output_subfolder, data, sensor_types)
-
-
+                sync_mode.tick(timeout=5.0)
+                for i in range(len(egos)):
+                    data = egos[i].getSensorData()
+                    output_folder = os.path.join(SimulationParams.data_output_subfolder, "ego" + str(i))
+                    save_sensors.saveAllSensors(output_folder, data, egos[i].sensor_types)
+                    #save_sensors.saveSteeringAngle(angle, SimulationParams.data_output_subfolder)
+                print("new frame!")
     finally:
         # stop pedestrians (list is [controller, actor, controller, actor ...])
         for i in range(0, len(w_all_actors)):
@@ -69,8 +70,13 @@ def main():
         client.apply_batch([carla.command.DestroyActor(x) for x in w_all_id])
 
         client.apply_batch([carla.command.DestroyActor(x) for x in v_all_id])
-        [s.destroy() for s in sensors_ref]
+        #[s.destroy() for s in sensors_ref]
         ego.destroy()
+
+        #This is to prevent Unreal from crashing from waiting the client.
+        settings = world.get_settings()
+        settings.synchronous_mode = False
+        world.apply_settings(settings)
 
 
 
