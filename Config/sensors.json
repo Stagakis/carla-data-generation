@@ -8,8 +8,8 @@
             "x": 0.0, "y": 0.0, "z": 2.4, "roll": 0.0, "pitch": 0.0, "yaw": 0.0
             }],
             "fov":100.0,
-            "image_size_x": 2048,
-            "image_size_y": 1024
+            "image_size_x": 1024,
+            "image_size_y": 512
         },
     
         {
