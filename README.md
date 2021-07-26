@@ -10,5 +10,5 @@ and ```sensor_json_filepath``` respectively in Class SimulationParams in ```conf
 
 My implementation uses ques and synchronous communication with the server such that the sensor output is always exactly syncrhonized with the world clock
 
-#How to run
+# How to run
 ```python3 multi_data_generator.py``` and a folder _out will be created with the respective Ego and sensor data.
